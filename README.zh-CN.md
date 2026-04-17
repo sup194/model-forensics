@@ -136,3 +136,7 @@ targets:
 - 基于本地可信 reference profile 的启发式和语义匹配
 - 用于保存 reference 和历史运行结果的本地 SQLite 存储
 - 带逐条 prompt 证据的 JSON 和 Markdown 报告输出
+
+## 致谢
+
+特别感谢 [Linux.do](https://linux.do) 社区的支持与帮助。

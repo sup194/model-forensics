@@ -136,3 +136,7 @@ For OpenAI-compatible targets, `base_url` should stop at `.../v1`.
 - heuristic and semantic matching against local trusted reference profiles
 - local SQLite storage for references and historical runs
 - JSON and Markdown reports with prompt-level evidence
+
+## Acknowledgements
+
+Special thanks to the [Linux.do](https://linux.do) community for its support and help.
