@@ -1,0 +1,9 @@
+name: reference-profile
+description: Profile one trusted target as a reference model.
+targets:
+  - name: trusted-reference
+    provider: generic
+    protocol: openai
+    base_url: https://api.example.com/v1
+    claimed_model: trusted-model-v1
+    api_key_env: REFERENCE_API_KEY

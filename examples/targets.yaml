@@ -1,0 +1,9 @@
+name: suspect-check
+description: Inspect one suspicious OpenAI-compatible endpoint.
+targets:
+  - name: suspect-openai
+    provider: generic
+    protocol: openai
+    base_url: https://suspicious.example.com/v1
+    claimed_model: claimed-model-v1
+    api_key_env: SUSPECT_API_KEY
