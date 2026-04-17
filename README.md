@@ -1,70 +1,47 @@
 # model-forensics
 
-简体中文文档: [README.zh-CN.md](README.zh-CN.md)
+简体中文: README.zh-CN.md
 
-`model-forensics` is a CLI for checking whether an LLM provider is actually serving the model it claims to serve.
+`model-forensics` is a CLI tool for checking whether the models provided by a model provider are fake.
 
-Use it when:
+Use it for scenarios like:
 
-- a provider claims to serve an official model but may be relaying to something else
-- a model gateway may be mixing multiple backends behind one model name
-- a suspicious endpoint may be impersonating an official OpenAI- or Anthropic-style API
+- gateway fraud, **bait-and-switch**
+- one claimed model actually mixing multiple models behind it
+- comparing model behavior across different periods to see whether it is stable or whether the backend switched to another model
 
-## What It Checks
+## How It Checks
 
-The project combines two kinds of evidence:
-
-- anomaly screening for suspicious model-provider behavior
-- reference-model matching against a local fingerprint database built from trusted official endpoints
-
-In practice, it looks for signals such as:
-
-- self-identification mismatches
-- inconsistent raw API model names
-- knowledge cutoff inconsistencies
-- refusal and jailbreak behavior patterns
-- formatting and reasoning fingerprints
-- unusually high similarity across supposedly different targets
+- uses combined test cases for anomaly screening
+- builds a local fingerprint database from official models for model matching detection
 
 ## Quick Start
 
-### Option A: Inspect Without Local References
+### Option A: Without Local Reference
 
-If you want a fast first pass, inspect a suspicious API without building any local reference database:
+For a quick first pass, you can skip building a local reference and run:
 
 ```bash
 mforensics inspect examples/targets.yaml
 ```
 
-This runs anomaly screening only. It is useful for a quick pass, but weaker than comparing against trusted reference profiles.
+### Option B: With Local Reference
 
-### Option B: Inspect With Local References
-
-If you want stronger evidence, first build local reference profiles from official providers you trust:
+If you want further comparison evidence, you can first build a local reference from an official model:
 
 ```bash
 mforensics profile examples/reference.yaml --save-as gpt-4o-official --db data/model-forensics.sqlite
 ```
 
-Then inspect the suspicious endpoint:
+Then inspect the corresponding model:
 
 ```bash
 mforensics inspect examples/targets.yaml --db data/model-forensics.sqlite --out reports/run-001
 ```
 
-The report may include:
-
-- anomaly verdicts for each target
-- extracted identity claims
-- raw API model names returned by the endpoint
-- knowledge cutoff evidence
-- behavior fingerprints
-- top reference-model matches
-- cross-target similarity findings
-
 ### Compare Historical Runs
 
-You can compare runs over time to check whether a provider is stable or changing behavior:
+You can also compare results from different periods to see whether a model is stable or whether the backend has changed:
 
 ```bash
 mforensics compare <run-id-a> <run-id-b> --db data/model-forensics.sqlite
@@ -86,10 +63,8 @@ mforensics refs delete trusted-model-v1 --db data/model-forensics.sqlite
 
 ## Secrets
 
-You can keep secrets in environment variables directly, or in a local `.env` file.
-
-The CLI auto-loads the nearest `.env` file it finds by walking upward from the config file directory.
-Only real local `.env` files are ignored by git. A tracked template is available as `.env.example`.
+The CLI walks upward from the config file directory and automatically loads the nearest `.env` file.
+`.env.example`.
 
 Example `.env`:
 
@@ -101,7 +76,7 @@ OPENAI_API_KEY=replace-with-openai-api-key-for-embeddings
 
 ## Target Config
 
-Suspicious provider example:
+Example config for the model to inspect:
 
 ```yaml
 name: suspect-check
@@ -114,7 +89,7 @@ targets:
     api_key_env: SUSPECT_API_KEY
 ```
 
-Trusted reference example:
+Example config for an official reference:
 
 ```yaml
 name: official-reference
@@ -126,16 +101,6 @@ targets:
     claimed_model: gpt-4o
     api_key_env: OPENAI_API_KEY
 ```
-
-For OpenAI-compatible targets, `base_url` should stop at `.../v1`.
-
-## Current Scope
-
-- OpenAI-compatible and Anthropic-compatible adapters
-- anomaly screening aimed at suspicious model providers
-- heuristic and semantic matching against local trusted reference profiles
-- local SQLite storage for references and historical runs
-- JSON and Markdown reports with prompt-level evidence
 
 ## Acknowledgements
 
