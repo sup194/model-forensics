@@ -1,9 +1,74 @@
 # model-forensics
 
-`model-forensics` is a CLI for two related jobs:
+简体中文文档: [README.zh-CN.md](README.zh-CN.md)
 
-- anomaly screening for suspicious LLM APIs
-- reference-model matching against a local fingerprint database
+`model-forensics` is a CLI for checking whether an LLM provider is actually serving the model it claims to serve.
+
+Use it when:
+
+- a provider claims to serve an official model but may be relaying to something else
+- a model gateway may be mixing multiple backends behind one model name
+- a suspicious endpoint may be impersonating an official OpenAI- or Anthropic-style API
+
+## What It Checks
+
+The project combines two kinds of evidence:
+
+- anomaly screening for suspicious model-provider behavior
+- reference-model matching against a local fingerprint database built from trusted official endpoints
+
+In practice, it looks for signals such as:
+
+- self-identification mismatches
+- inconsistent raw API model names
+- knowledge cutoff inconsistencies
+- refusal and jailbreak behavior patterns
+- formatting and reasoning fingerprints
+- unusually high similarity across supposedly different targets
+
+## Quick Start
+
+### Option A: Inspect Without Local References
+
+If you want a fast first pass, inspect a suspicious API without building any local reference database:
+
+```bash
+mforensics inspect examples/targets.yaml
+```
+
+This runs anomaly screening only. It is useful for a quick pass, but weaker than comparing against trusted reference profiles.
+
+### Option B: Inspect With Local References
+
+If you want stronger evidence, first build local reference profiles from official providers you trust:
+
+```bash
+mforensics profile examples/reference.yaml --save-as gpt-4o-official --db data/model-forensics.sqlite
+```
+
+Then inspect the suspicious endpoint:
+
+```bash
+mforensics inspect examples/targets.yaml --db data/model-forensics.sqlite --out reports/run-001
+```
+
+The report may include:
+
+- anomaly verdicts for each target
+- extracted identity claims
+- raw API model names returned by the endpoint
+- knowledge cutoff evidence
+- behavior fingerprints
+- top reference-model matches
+- cross-target similarity findings
+
+### Compare Historical Runs
+
+You can compare runs over time to check whether a provider is stable or changing behavior:
+
+```bash
+mforensics compare <run-id-a> <run-id-b> --db data/model-forensics.sqlite
+```
 
 ## Commands
 
@@ -34,43 +99,9 @@ SUSPECT_API_KEY=replace-with-suspect-api-key
 OPENAI_API_KEY=replace-with-openai-api-key-for-embeddings
 ```
 
-## Usage Modes
-
-### Inspect Without References
-
-You can inspect a suspicious API without building any local reference database first:
-
-```bash
-mforensics inspect examples/targets.yaml
-```
-
-This runs anomaly screening only. The report still includes:
-
-- identity claims
-- knowledge cutoff inconsistencies
-- anomaly verdict
-- behavior fingerprint
-- cross-target similarity when multiple targets are present
-
-Reference matching is optional. If no reference profiles exist, the inspect report will say so explicitly.
-
-### Inspect With References
-
-If you have already profiled trusted models, `inspect` will also run candidate matching:
-
-```bash
-mforensics inspect examples/targets.yaml --db data/model-forensics.sqlite --out reports/run-001
-```
-
-### Compare Historical Runs
-
-You can compare two stored runs later:
-
-```bash
-mforensics compare <run-id-a> <run-id-b> --db data/model-forensics.sqlite
-```
-
 ## Target Config
+
+Suspicious provider example:
 
 ```yaml
 name: suspect-check
@@ -79,18 +110,29 @@ targets:
     provider: generic
     protocol: openai
     base_url: https://suspicious.example.com/v1
-    claimed_model: claimed-model-v1
+    claimed_model: gpt-4o
     api_key_env: SUSPECT_API_KEY
+```
+
+Trusted reference example:
+
+```yaml
+name: official-reference
+targets:
+  - name: trusted-openai
+    provider: openai
+    protocol: openai
+    base_url: https://api.openai.com/v1
+    claimed_model: gpt-4o
+    api_key_env: OPENAI_API_KEY
 ```
 
 For OpenAI-compatible targets, `base_url` should stop at `.../v1`.
 
-## Scope
-
-The current MVP includes:
+## Current Scope
 
 - OpenAI-compatible and Anthropic-compatible adapters
-- anomaly screening for suspicious model APIs
-- heuristic and semantic matching against local reference profiles
+- anomaly screening aimed at suspicious model providers
+- heuristic and semantic matching against local trusted reference profiles
 - local SQLite storage for references and historical runs
-- JSON and Markdown reports
+- JSON and Markdown reports with prompt-level evidence
