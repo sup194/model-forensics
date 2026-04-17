@@ -1,6 +1,7 @@
 # model-forensics
 
 简体中文: [README.zh-CN.md](README.zh-CN.md)
+License: MIT
 
 `model-forensics` is a CLI tool for checking whether the models provided by a model provider are fake.
 
