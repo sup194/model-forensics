@@ -1,6 +1,6 @@
 # model-forensics
 
-English: README.md
+English: [README.md](README.md)
 
 `model-forensics` 是一个 CLI 工具，用来检查模型提供商提供的模型是否造假。
 
